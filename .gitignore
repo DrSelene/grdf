@@ -1,0 +1,5 @@
+.venv/
+*.pdf
+*.xlsx
+bas/
+prod/
