@@ -1,5 +1,6 @@
 from classes import Grdf_Api
 import pandas as pd
+from utils import write_to_excel
 
 
 def main():
@@ -8,6 +9,7 @@ def main():
     )
 
     myapi.get_token()
+    print(myapi.access_token)
 
     myapi.declarer_droit_access(
         id_pce=["GI999001", "11300000000000"],
@@ -47,24 +49,15 @@ def main():
         ],
     )
 
-    conso = myapi.get_conso_data(
-        id_pce=["11300000000001"], date_debut="2020-01-01", date_fin="2020-01-03"
-    )
+    tous_droits_access = myapi.consulter_droit_acces()
 
-    print(conso)
+    # conso = myapi.get_conso_data(
+    #     id_pce=["11300000000001"], date_debut="2020-01-01", date_fin="2020-01-03"
+    # )
 
-    # Create a Pandas DataFrame from the list of dictionaries
-    df = pd.DataFrame(conso)
+    # print(conso)
 
-    # Create an Excel writer with Pandas
-    with pd.ExcelWriter("output.xlsx", engine="xlsxwriter") as writer:
-        # Iterate over unique id_pce values
-        for id_pce in df["id_pce"].unique():
-            # Filter DataFrame for each id_pce
-            df_id_pce = df[df["id_pce"] == id_pce]
-
-            # Write the DataFrame to the Excel file
-            df_id_pce.to_excel(writer, sheet_name=f"pce {id_pce}", index=False)
+    # write_to_excel(data = conso, path = 'output.xlsx')
 
 
 if __name__ == "__main__":
