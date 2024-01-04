@@ -3,3 +3,6 @@
 *.xlsx
 bas/
 prod/
+src/build/
+src/dist/
+*__pycache__*

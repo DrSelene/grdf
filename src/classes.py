@@ -141,15 +141,12 @@ class Grdf_Api:
 
         pce_data = []
         for pce in id_pce:
-            print(pce)
             url = f"{env[self.running_env]['uri_data']}pce/{pce}/donnees_consos_informatives"
 
             try:
                 response = requests.request(
                     "GET", url=url, headers=headers, params=params
                 )
-
-                print(f"RESPONE IS : \n{response.text}")
 
                 # Regular expression pattern to match the 'energie' values, and beg and end date
                 matches_energy = re.compile(r'"energie":\s*(\d+),').findall(
@@ -208,6 +205,5 @@ class Grdf_Api:
                 print(f"An unexpected error occurred: {e}")
                 return f"erreur: {e}"
 
-        print(pce_data)
         pce_data = pd.concat(pce_data)
         return pce_data

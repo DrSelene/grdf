@@ -167,7 +167,6 @@ class AppGui:
             for index in self.id_pce_listbox_tab3.curselection()
         ]
 
-        print(selected_pces)
         script_dir = os.path.dirname(sys.argv[0])
 
         path_to_file = os.path.join(
@@ -241,7 +240,6 @@ class AppGui:
     def submit_tab4(self):
         # Collect values from the entries
         params_tab4 = {label: entry.get() for label, entry in self.entries_tab4.items()}
-        # print(params_tab4)
 
         try:
             # Call the Grdf_Api method to declare droits d'accès
@@ -259,7 +257,6 @@ class AppGui:
 
 def main():
     root = tk.Tk()
-    root.iconbitmap("src/icon.ico")
     app = AppGui(root)
     root.mainloop()
 
