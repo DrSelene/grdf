@@ -1,7 +1,9 @@
+# Authored 01/24 Selene Petit selene.petit@gmail.com
+
 import tkinter as tk
 from tkinter import ttk
 from classes import Grdf_Api  # Import your Grdf_Api class
-from utils import write_to_excel
+from utils import write_to_excel, variable_declarer_pce
 import pandas as pd
 import os
 import sys
@@ -31,7 +33,7 @@ class AppGui:
 
         self.property_label = ttk.Label(
             master,
-            text="Copyright © 2023 VB Solutions. All rights reserved",
+            text="Copyright © 2023 VB Solutions. Tous droits réservés",
             font=("Helvetica", 8),
         )
         self.property_label.pack(side=tk.BOTTOM, pady=5)
@@ -79,6 +81,7 @@ class AppGui:
         self.myapi.client_id = self.client_id_entry_tab1.get()
         self.myapi.client_secret = self.client_secret_entry_tab1.get()
         self.myapi.running_env = "prod"
+
 
         try:
             # Call the Grdf_Api method to generate token
@@ -140,12 +143,12 @@ class AppGui:
         self.id_pce_listbox_tab3.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
         self.scrollbar_tab3.grid(row=0, column=2, pady=5, sticky="ns")
 
-        self.date_debut_label_tab3 = ttk.Label(self.tab3, text="Date Debut:")
+        self.date_debut_label_tab3 = ttk.Label(self.tab3, text="Date Debut (YYYY-MM-DD):")
         self.date_debut_entry_tab3 = ttk.Entry(self.tab3)
         self.date_debut_label_tab3.grid(row=1, column=0, sticky="e", padx=5, pady=5)
         self.date_debut_entry_tab3.grid(row=1, column=1, padx=5, pady=5)
 
-        self.date_fin_label_tab3 = ttk.Label(self.tab3, text="Date Fin:")
+        self.date_fin_label_tab3 = ttk.Label(self.tab3, text="Date Fin: (YYYY-MM-DD)")
         self.date_fin_entry_tab3 = ttk.Entry(self.tab3)
         self.date_fin_label_tab3.grid(row=2, column=0, sticky="e", padx=5, pady=5)
         self.date_fin_entry_tab3.grid(row=2, column=1, padx=5, pady=5)
@@ -169,10 +172,16 @@ class AppGui:
 
         script_dir = os.path.dirname(sys.argv[0])
 
-        path_to_file = os.path.join(
-            script_dir,
-            f"{self.date_debut_entry_tab3.get()} à {self.date_fin_entry_tab3.get()} {'_'.join(selected_pces)}.xlsx",
-        )
+        if len(selected_pces)==1:
+            path_to_file = os.path.join(
+                script_dir,
+                f"{self.date_debut_entry_tab3.get()} à {self.date_fin_entry_tab3.get()}_{selected_pces[0]}.xlsx",
+            )
+        else:
+            path_to_file = os.path.join(
+                script_dir,
+                f"{self.date_debut_entry_tab3.get()} à {self.date_fin_entry_tab3.get()}_multi_PCE.xlsx",
+            )            
 
         # Call the Grdf_Api method to get conso data
         conso_data = self.myapi.get_conso_data(
@@ -199,54 +208,39 @@ class AppGui:
 
         self.result_label_tab4 = ttk.Label(self.tab4, text="Result:")
         self.result_text_tab4 = tk.Text(self.tab4, height=10, width=40, wrap="word")
-        labels_tab4 = labels_tab4 = [
-            "id_pce",
-            "role_tiers",
-            "raison_sociale",
-            "nom_titulaire",
-            "code_postal",
-            "courriel_titulaire",
-            "numero_telephone_mobile_titulaire",
-            "date_debut_droit_acces",
-            "date_fin_droit_acces",
-            "perim_donnees_conso_debut",
-            "perim_donnees_conso_fin",
-            "perim_donnees_contractuelles",
-            "perim_donnees_techniques",
-            "perim_donnees_informatives",
-            "perim_donnees_publiees",
-        ]
-        self.entries_tab4 = {}
 
-        for i, label_text in enumerate(labels_tab4):
-            label = ttk.Label(self.tab4, text=label_text)
+        self.entries_tab4_display = {}
+
+        for i, variable_name in enumerate(variable_declarer_pce):
+            label = ttk.Label(self.tab4, text=variable_declarer_pce[variable_name])
             entry = ttk.Entry(self.tab4, width=50)
             label.grid(row=i, column=0, sticky="e", padx=5, pady=5)
             entry.grid(row=i, column=1, padx=5, pady=5)
-            self.entries_tab4[label_text] = entry
+            self.entries_tab4_display[variable_name] = entry
 
-        self.entries_tab4["role_tiers"].insert(0, "AUTORISE_CONTRAT_FOURNITURE")
+        self.entries_tab4_display["role_tiers"].insert(0, "AUTORISE_CONTRAT_FOURNITURE")
 
         self.submit_button_tab4.grid(
-            row=len(labels_tab4), column=0, columnspan=2, pady=10
+            row=len(variable_declarer_pce), column=0, columnspan=2, pady=10
         )
         self.result_label_tab4.grid(
-            row=len(labels_tab4) + 1, column=0, sticky="w", padx=5, pady=5
+            row=len(variable_declarer_pce) + 1, column=0, sticky="w", padx=5, pady=5
         )
         self.result_text_tab4.grid(
-            row=len(labels_tab4) + 2, column=0, columnspan=2, padx=5, pady=5
+            row=len(variable_declarer_pce) + 2, column=0, columnspan=2, padx=5, pady=5
         )
 
     def submit_tab4(self):
+
         # Collect values from the entries
-        params_tab4 = {label: entry.get() for label, entry in self.entries_tab4.items()}
+        params_tab4 = {var_name: entry.get() for var_name, entry in self.entries_tab4_display.items()}
 
         try:
             # Call the Grdf_Api method to declare droits d'accès
             new_droit_acces_resp = self.myapi.declarer_droit_access(
-                id_pce=[params_tab4["id_pce"]], pce_parameters=[params_tab4]
+                id_pce=params_tab4["id_pce"].split(','), pce_parameters=params_tab4
             )
-            result_tab4 = f"Droits d'accès déclarés\n{new_droit_acces_resp}"
+            result_tab4 = f"{new_droit_acces_resp}"
         except Exception as e:
             result_tab4 = f"Erreur: {str(e)}"
 
