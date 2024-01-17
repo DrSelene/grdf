@@ -1,3 +1,4 @@
+# Authored 01/24 Selene Petit selene.petit@gmail.com
 """Creates classes for the project"""
 from utils import env, token_uri
 import requests
@@ -33,11 +34,11 @@ class Grdf_Api:
 
         return self.access_token
 
-    def declarer_droit_access(self, id_pce: list[str], pce_parameters: list[dict]):
+    def declarer_droit_access(self, id_pce: list[str], pce_parameters: dict):
         """Uses Put to declare droit d'acces
         Args:
             - id_pce (list) list of pce ids (str)
-            - pce_parameters (list). For each PCE, list of params (dict) to send to API
+            - pce_parameters: dict of params (dict) to send to API
         """
 
         headers = {
@@ -45,13 +46,14 @@ class Grdf_Api:
             "Authorization": "Bearer " + self.access_token,
         }
 
+        print(id_pce)
         error_counter = 0
         for count in range(0, len(id_pce)):
             # Make one request per PCE
             url = f"{env[self.running_env]['uri_data']}pce/{id_pce[count]}/droit_acces"
             try:
                 response = requests.request(
-                    "PUT", url=url, headers=headers, json=pce_parameters[count]
+                    "PUT", url=url, headers=headers, json=pce_parameters
                 )
                 return response.text
 
@@ -77,7 +79,7 @@ class Grdf_Api:
                 return e
 
             finally:
-                time.sleep(0.2)
+                time.sleep(1)
 
     def consulter_droit_acces(self) -> Tuple[Dict[str, str], List[str]]:
         """Gets all droit access for all PCE with their status,
@@ -172,13 +174,14 @@ class Grdf_Api:
                     return f"erreur: {matches_status_msg}"
 
                 if matches_energy:
+
                     pce_data.append(
                         pd.DataFrame(
                             {
                                 "id_pce": pce,
                                 "consommation (kWh)": matches_energy,
-                                "date_debut": matches_start_date,
-                                "date_fin": matches_end_date,
+                                "date_debut": pd.to_datetime(matches_start_date, utc=True).date,
+                                "date_fin": pd.to_datetime(matches_end_date, utc=True).date,
                                 "type_qualif_conso": matches_type_conso,
                             }
                         )
