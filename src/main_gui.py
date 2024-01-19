@@ -1,6 +1,7 @@
 # Authored 01/24 Selene Petit selene.petit@gmail.com
 
 import tkinter as tk
+import time
 from tkinter import ttk
 from classes import Grdf_Api  # Import your Grdf_Api class
 from utils import write_to_excel, variable_declarer_pce
@@ -235,18 +236,24 @@ class AppGui:
         # Collect values from the entries
         params_tab4 = {var_name: entry.get() for var_name, entry in self.entries_tab4_display.items()}
 
-        try:
+        return_text = ''
+        for id_pce_to_declare in params_tab4["id_pce"].split(','):
+            
             # Call the Grdf_Api method to declare droits d'accès
-            new_droit_acces_resp = self.myapi.declarer_droit_access(
-                id_pce=params_tab4["id_pce"].split(','), pce_parameters=params_tab4
+            success, api_resp = self.myapi.declarer_droit_access(
+                id_pce=id_pce_to_declare, pce_parameters=params_tab4
             )
-            result_tab4 = f"{new_droit_acces_resp}"
-        except Exception as e:
-            result_tab4 = f"Erreur: {str(e)}"
+
+            if success:
+                return_text += f"PCE {id_pce_to_declare} déclaré: {api_resp['message_retour_traitement']}\n"
+            else:
+                return_text += f"Erreur pour PCE {id_pce_to_declare}: {api_resp}\n"
+
+            time.sleep(.1)
 
         # Display the result in the Tkinter window
         self.result_text_tab4.delete("1.0", tk.END)  # Clear previous content
-        self.result_text_tab4.insert(tk.END, result_tab4)
+        self.result_text_tab4.insert(tk.END, return_text)
 
 
 def main():

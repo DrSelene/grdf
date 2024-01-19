@@ -34,10 +34,10 @@ class Grdf_Api:
 
         return self.access_token
 
-    def declarer_droit_access(self, id_pce: list[str], pce_parameters: dict):
+    def declarer_droit_access(self, id_pce: str, pce_parameters: dict):
         """Uses Put to declare droit d'acces
         Args:
-            - id_pce (list) list of pce ids (str)
+            - id_pce (str): id of the pce to declare
             - pce_parameters: dict of params (dict) to send to API
         """
 
@@ -46,40 +46,40 @@ class Grdf_Api:
             "Authorization": "Bearer " + self.access_token,
         }
 
-        print(id_pce)
         error_counter = 0
-        for count in range(0, len(id_pce)):
-            # Make one request per PCE
-            url = f"{env[self.running_env]['uri_data']}pce/{id_pce[count]}/droit_acces"
-            try:
-                response = requests.request(
-                    "PUT", url=url, headers=headers, json=pce_parameters
-                )
-                return response.text
+        # Make one request per PCE
+        url = f"{env[self.running_env]['uri_data']}pce/{id_pce}/droit_acces"
 
-            except HTTPError as e:
-                if e.response.status_code == 403 and error_counter <= 5:
-                    error_counter += 1
-                    print("Forbidden access. Regenerating a token now and retrying...")
-                    self.get_token()
-                    self.declarer_droit_access(id_pce, pce_parameters)
-                elif e.response.status_code == 403 and error_counter > 5:
-                    print("Retied 5 times. Stop retrying now")
-                else:
-                    print(f"HTTPError: {e.response.status_code} - {e.response.reason}")
+        try:
+            response = requests.request(
+                "PUT", url=url, headers=headers, json=pce_parameters
+            )
 
-            except RequestException as e:
-                # Handle network-related issues, HTTP errors, timeouts, etc.
-                print(f"Request failed: {e}")
-                return e
+            return True, response.json()
 
-            except Exception as e:
-                # Handle any other unexpected exceptions
-                print(f"An unexpected error occurred: {e}")
-                return e
+        except HTTPError as e:
+            if e.response.status_code == 403 and error_counter <= 5:
+                error_counter += 1
+                print("Forbidden access. Regenerating a token now and retrying...")
+                self.get_token()
+                self.declarer_droit_access(id_pce, pce_parameters)
+            elif e.response.status_code == 403 and error_counter > 5:
+                print("Retied 5 times. Stop retrying now")
+                return False, str(e)
+            else:
+                print(f"HTTPError: {e.response.status_code} - {e.response.reason}")
+                return False, str(e)
 
-            finally:
-                time.sleep(1)
+        except RequestException as e:
+            # Handle network-related issues, HTTP errors, timeouts, etc.
+            print(f"Request failed: {e}")
+            return False, str(e)
+        
+        except Exception as e:
+            # Handle any other unexpected exceptions
+            print(f"An unexpected error occurred: {e}")
+            return False, str(e)
+
 
     def consulter_droit_acces(self) -> Tuple[Dict[str, str], List[str]]:
         """Gets all droit access for all PCE with their status,
